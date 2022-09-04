@@ -154,7 +154,7 @@ var server = net.createServer(function(client) {
             return;
         }
         if (thisClient.loggedIn == true) {
-            if (!commands(data, client)) {
+            if (!commands(data, client) && /^(\s|[^\x20-\x7E])+$/g.test(data)) {
                 sendToAll(thisClient.displayname + ": " + data,client);
             }
         } else {
