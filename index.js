@@ -154,8 +154,10 @@ var server = net.createServer(function(client) {
             return;
         }
         if (thisClient.loggedIn == true) {
-            if (!commands(data, client) && /^(\s|[^\x20-\x7E])+$/g.test(data)) {
-                sendToAll(thisClient.displayname + ": " + data,client);
+            if (!commands(data, client)) {
+                if (/^[\x00-\x7F]+$/g.test(data)) {
+                    sendToAll(thisClient.displayname + ": " + data,client);
+                }
             }
         } else {
             client.write("Du bist nicht einloggt. Opfer.\r\n");
