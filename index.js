@@ -158,7 +158,7 @@ var server = net.createServer(function(client) {
         }
         if (thisClient.loggedIn == true) {
             if (!commands(data, client)) {
-                if (/^[\x00-\x7F]+$/g.test(data)) {
+                if (/^[\x00-\x7F]+$/g.test(data) && !/^(\[|\])$/g.test(data)) {
                     sendToAll(thisClient.displayname + ": " + data,client);
                 } else {
                     client.write("Sie haben eine Straftat begangen! Keine bösen Steuerzeichen!");
