@@ -56,16 +56,14 @@ function tryLogin(otpInfo) {
 }
 
 function removeClientByID(id) {
-
-
     console.log("removing user with id " + id);
     clients = clients.filter(function( obj ) {
         return obj["unique_id"] !== id;
     });
 
     listClients();
-
 }
+
 function getClientByID(id) {
     let result = clients.find(obj => {
         return obj["unique_id"] === id
@@ -73,15 +71,18 @@ function getClientByID(id) {
     return result;
 
 }
+
 function getClientBySeed(seed) {
     let result = clients.find(obj => {
         return obj.seed === seed
     });
     return result;
 }
+
 function randomInt (low, high) {
     return Math.floor(Math.random() * (high - low) + low);
 }
+
 function generateId(length) {
     var output = "";
     for(var i = 0;i<length;i++) {
@@ -112,6 +113,7 @@ function userList(sender) {
     userListReadable += "\r\n";
     sender.write(userListReadable);
 }
+
 function commands(data, sender) {
     if (data.startsWith("!clients")) {
         listClients();
@@ -129,6 +131,7 @@ function commands(data, sender) {
     return false;
 
 }
+
 function systemMessage(message) {
     sendToAll("SYSTEM: " + message);
 }
@@ -157,6 +160,8 @@ var server = net.createServer(function(client) {
             if (!commands(data, client)) {
                 if (/^[\x00-\x7F]+$/g.test(data)) {
                     sendToAll(thisClient.displayname + ": " + data,client);
+                } else {
+                    clients.push("Sie haben eine Straftat begangen!");
                 }
             }
         } else {
