@@ -3,7 +3,7 @@ var net = require('net');
 const mqtt = require('mqtt');
 
 require('dotenv').config()
-console.log(process.env.MQTT_USER) 
+console.log(process.env.MQTT_USER)
 
 const options = {
   // Clean session
@@ -47,12 +47,12 @@ function tryLogin(otpInfo) {
     if (newClient === undefined) {
         return;
     }
-    systemMessage("Willkommen, " + otpInfo.displayname + "!");
     newClient.username = otpInfo.username;
     newClient.twitchid = otpInfo.userid;
     newClient.displayname = otpInfo.displayname;
     newClient.loggedIn = true;
     newClient.seed = undefined;
+    systemMessage("Willkommen, " + otpInfo.displayname + "!");
     listClients();
 }
 
@@ -96,7 +96,9 @@ function sendToAll(data,sender) {
     console.log(clients.length);
     var size = clients.length;
     for(i=0;i<size;i++) {
-        clients[i].writeln(data);
+        if (clients[i].loggedIn) {
+          clients[i].writeln(data);
+        }
     }
 }
 
@@ -180,10 +182,7 @@ function telnetCommand (dodontwill, command, client) {
 }
 
 function welcomeSequence(client) {
-    // clear screen
-    client.write("\u001B[2J");
-    // go to 0,0
-    client.write("\033[0;0H");
+
     client.unique_id = generateId(10);
     client.seed = (Math.random() + 1).toString(36).substring(2);
     telnetCommand(WILL, OPT_ECHO, client);
@@ -191,63 +190,86 @@ function welcomeSequence(client) {
     telnetCommand(WONT, OPT_LINE_MODE, client);
     telnetCommand(DO, OPT_WINDOW_SIZE, client);
     telnetCommand(DO, OPT_NEW_ENVIRON, client);
-    
+
     client.writeln = function (text) {client.write(text + "\r\n");}
     client.loggedIn = false;
     client.username = "anonymous";
     client.displayname = "Anonymous";
     client.windowSize = [80,24];
     client.buffer = "";
-    client.writeln("Guten Tag! Sie sind verbunden mit der Mailbox von: \u001b[35mHallo\u001b[0m");
-    client.writeln("Bitte schreibe die folgende Zeile in den Twitch Chat, um dich zu authentifizieren.")
-    client.writeln("\r\n\u001b[35m/w JanOfThings !otp " + client.seed +  "\u001b[0m");
 
-    
+
 }
-function processData(client, data) {
+function processInput(client, data) {
   const encoder = new TextEncoder();
-  if (/^([a-zA-Z0-9\u0600-\u06FF\u0660-\u0669\u06F0-\u06F9 _.-]+)$/.test(data)) {
-    client.buffer += data;
-    console.log("text");
-    return;
-  } 
-  if (data.charCodeAt(0) == 127) {
-    client.buffer = client.buffer.slice(0,-1);
-    console.log("backspace");
-    return;
-  }
-  if (data.charCodeAt(0) == 0x00 && data.length == 1) {
-    console.log("enter");
-    client.buffer = "";
-    return;
-  }
   let bytes = [];
 
+  if (data.charCodeAt(0) == 0x03 && data.length == 1) {
+    client.end();
+  }
   for (let i =0 ; i<data.length; i++) {
-    let newByteSet = []; 
+    let newByteSet = [];
     newByteSet[0] = Math.floor(data.charCodeAt(i).toString(10)/256);
     newByteSet[1] = data.charCodeAt(i).toString(10)%255;
     newByteSet[2] = data.charCodeAt(i);
     bytes.push(newByteSet);
   }
-  console.table(bytes);
 
   if (bytes[0][0] == IAC) {
+
     // IAC
-    console.log("oho, ein befehl");
-    if (bytes[2][2] == OPT_WINDOW_SIZE) {
-      let x=(bytes[4][2]<128) ? bytes[4][2] : 127;
-      let y=(bytes[6][2]<128) ? bytes[6][2] : 127;
-      client.windowSize = [x, y];
+    // console.log("oho, ein befehl");
+    try {
+      if (bytes[2][2] == OPT_WINDOW_SIZE) {
+        let x=(bytes[4][2]<128) ? bytes[4][2] : 127;
+        let y=(bytes[6][2]<128) ? bytes[6][2] : 127;
+        client.windowSize = [x, y];
+      }
+    } catch (e) {
+      console.table(e, bytes);
     }
   }
+  if (!client.loggedIn) {
+    return;
+  }
+  if (/^([a-zA-Z0-9\u0600-\u06FF\u0660-\u0669\u06F0-\u06F9 üöäßÜÖÄẞ\!\?=,-.\\\/]+)$/.test(data)) {
+    client.buffer += data;
+    return;
+  }
+  if (data.charCodeAt(0) == 127 || bytes[0][2] == 8) {
+    client.buffer = client.buffer.slice(0,-1);
+    return;
+  }
+  if (bytes[0][2] == 13)  {
+    if (client.buffer.length == 0) {
+      return;
+    }
+    sendToAll(client.displayname + ": " + client.buffer);
+    client.buffer = "";
+    return;
+  }
+}
+function clearScreen(client) {
 
-
-  console.log("==========");
 }
 function renderPrompt(client) {
   client.write("\033[" + client.windowSize[1] + ";0H");
   client.write(client.buffer.padEnd(parseInt(client.windowSize[0], 10)-2, "."));
+}
+function renderScreen(client) {
+
+}
+function loginScreen(client) {
+  // clear screen
+  client.write("\u001B[2J");
+  // go to 0,0
+  client.write("\033[0;0H");
+  client.writeln("Guten Tag! Sie sind verbunden mit der Mailbox von: \u001b[35mHallo\u001b[0m");
+  client.writeln("Bitte schreibe die folgende Zeile in den Twitch Chat, um dich zu authentifizieren.")
+  client.writeln("\r\n\u001b[35m/w JanOfThings !otp " + client.seed +  "\u001b[0m");
+
+  client.write("\033[" + (parseInt(client.windowSize[1], 10)-1) + ";0H");
+  client.writeln("Du bist nicht einloggt. Opfer.".padEnd(parseInt(client.windowSize[0],10)-2, " "));
 }
 var server = net.createServer(function(client) {
     console.log("New client");
@@ -257,22 +279,25 @@ var server = net.createServer(function(client) {
         let thisClient = getClientByID(client["unique_id"]);
 
         let origdata = data;
-        data = data.toString().replace(/ {4}|[\t\n\r]/gm,'');
+        //data = data.toString().replace(/ {4}|[\t\n\r]/gm,'');
+        data = data.toString();
         if (data.length <=0) {
-            console.log(origdata);
+            console.log("Gefiltertes Zeug:", origdata);
             return;
         }
+        processInput(thisClient, data);
         if (thisClient.loggedIn == true) {
-          processData(thisClient, data);
-          renderPrompt(client);
+          renderScreen(client);
         } else {
-            client.write("\033[0;0H");
-            client.writeln("Du bist nicht einloggt. Opfer.");
+          loginScreen(client);
         }
     });
 
     client.on('close', function() {
         removeClientByID(client.unique_id);
+        if (!client.loggedIn) {
+          return;
+        }
         systemMessage(client.displayname + " hat uns verlassen.");
     });
 
