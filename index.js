@@ -4,7 +4,7 @@ const mqtt = require('mqtt');
 
 require('dotenv').config()
 console.log(process.env.MQTT_USER)
-
+let chatLog = [""];
 const options = {
   // Clean session
   clean: true,
@@ -92,12 +92,18 @@ function generateId(length) {
     return output;
 }
 
-function sendToAll(data,sender) {
-    console.log(clients.length);
-    var size = clients.length;
+function sendToAll(client, data) {
+    let message = client.username + ": " + data;
+    if (data === undefined) {
+      return;
+    }
+    chatLog.push(message);
+    chatLog = chatLog.slice(-150);
+    const size = clients.length;
+    console.table(chatLog);
     for(i=0;i<size;i++) {
         if (clients[i].loggedIn) {
-          clients[i].writeln(data);
+          renderScreen(clients[i]);
         }
     }
 }
@@ -195,7 +201,7 @@ function welcomeSequence(client) {
     client.loggedIn = false;
     client.username = "anonymous";
     client.displayname = "Anonymous";
-    client.windowSize = [80,24];
+    client.windowSize = [40,25];
     client.buffer = "";
 
 
@@ -224,6 +230,7 @@ function processInput(client, data) {
         let x=(bytes[4][2]<128) ? bytes[4][2] : 127;
         let y=(bytes[6][2]<128) ? bytes[6][2] : 127;
         client.windowSize = [x, y];
+        listClients();
       }
     } catch (e) {
       console.table(e, bytes);
@@ -244,7 +251,7 @@ function processInput(client, data) {
     if (client.buffer.length == 0) {
       return;
     }
-    sendToAll(client.displayname + ": " + client.buffer);
+    sendToAll(client, client.buffer);
     client.buffer = "";
     return;
   }
@@ -257,11 +264,48 @@ function renderPrompt(client) {
   client.write(client.buffer.padEnd(parseInt(client.windowSize[0], 10)-2, "."));
 }
 function renderScreen(client) {
+  // BORDER
+  // clear screen
+  client.write("\u001B[2J");
 
+  for (let x=0; x<client.windowSize[0];x++) {
+    switch (x) {
+      case 0:
+        for (let y=0; y<=client.windowSize[0];y++) {
+          client.write("\033[" + x + ";" + y + "H█");
+        }
+        break;
+      case client.windowSize[1]-1:
+        for (let y=0; y<=client.windowSize[0];y++) {
+          client.write("\033[" + x + ";" + y + "H█");
+        }
+        break;
+      case client.windowSize[1]:
+        client.write("\033[" + x + ";0H► " + client.buffer.substring(0,client.windowSize[0]-4));
+        client.write("\033[" + x + ";" + String(client.windowSize[0]) + "H◄");
+
+
+      default:
+        client.write("\033[" + x + ";0H█");
+        client.write("\033[" + x + ";" + String(client.windowSize[0]) + "H█");
+
+
+    }
+  }
+  let thisLine = 2;
+  for (let chatLine=chatLog.length-client.windowSize[1]+4; chatLine<chatLog.length;chatLine++) {
+    thisLine++;
+
+    if (chatLog[chatLine]) {
+      client.write("\033[" + thisLine + ";3H");
+      client.write(chatLog[chatLine].substring(0,client.windowSize[0]-4));
+    }
+  }
 }
 function loginScreen(client) {
   // clear screen
   client.write("\u001B[2J");
+
   // go to 0,0
   client.write("\033[0;0H");
   client.writeln("Guten Tag! Sie sind verbunden mit der Mailbox von: \u001b[35mHallo\u001b[0m");
