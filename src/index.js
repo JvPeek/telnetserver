@@ -1,10 +1,16 @@
+require('dotenv').config({ path: "../config.env"});
 var events = require('events');
 var net = require('net');
 const mqtt = require('mqtt');
+const IAC = require("./iac.js");
+const CODES = IAC.IAC_CODES
+const parseIAC = IAC.parseIAC
+const wm = require("./windowmanager.js");
+const db = require("./database.js");
 
-require('dotenv').config()
-console.log(process.env.MQTT_USER)
-let chatLog = [""];
+
+
+let chatLog = [];
 const options = {
   // Clean session
   clean: true,
@@ -14,6 +20,8 @@ const options = {
   username: process.env.MQTT_USER,
   password: process.env.MQTT_PASS,
 }
+
+
 
 const mqttclient  = mqtt.connect('mqtt://' + process.env.MQTT_SERVER + ':1883', options)
 mqttclient.on('connect', function () {
@@ -49,9 +57,15 @@ function tryLogin(otpInfo) {
     }
     newClient.username = otpInfo.username;
     newClient.twitchid = otpInfo.userid;
+    newClient.color=[otpInfo.color[0], otpInfo.color[1], otpInfo.color[2]] ;
     newClient.displayname = otpInfo.displayname;
     newClient.loggedIn = true;
     newClient.seed = undefined;
+    newClient.write(Buffer.from([255, 251, 31, 255, 250, 31, 255, 240]));
+    // newClient.write(Buffer.from([255,250, 31]))
+    // newClient.write(Buffer.from([255, 240]))
+    renderScreen(newClient);
+    console.log(newClient);
     systemMessage("Willkommen, " + otpInfo.displayname + "!");
     listClients();
 }
@@ -93,11 +107,18 @@ function generateId(length) {
 }
 
 function sendToAll(client, data) {
-    let message = client.username + ": " + data;
     if (data === undefined) {
       return;
     }
-    chatLog.push(message);
+    let chatObject = {
+      "colorString": "\u001b[38;2;" + client.color[0] + ";" + client.color[1] + ";" + client.color[2] + "m",
+      "displayName": client.displayname,
+      "message": data,
+      "time": new Date()
+    }
+    chatObject = JSON.parse(JSON.stringify(chatObject));
+    //let message = "\u001b[38;2;255;0;255m" + client.username + "\u001b[0m: " + data;
+    chatLog.push(chatObject);
     chatLog = chatLog.slice(-150);
     const size = clients.length;
     console.table(chatLog);
@@ -106,6 +127,7 @@ function sendToAll(client, data) {
           renderScreen(clients[i]);
         }
     }
+    mqttclient.publish("telnet/chat", JSON.stringify(chatObject));
 }
 
 function userList(sender) {
@@ -128,6 +150,10 @@ function commands(data, sender) {
         listClients();
         return true;
     }
+    if (data.startsWith("!windows")) {
+        console.table(wm.getWindows(sender));
+        return true;
+    }
     if (data.startsWith("!exit")) {
         sender.end("Ausgeloggt");
         removeClientByID(sender["unique_id"]);
@@ -137,47 +163,30 @@ function commands(data, sender) {
         userList(sender);
         return true;
     }
+    if (data.startsWith("!dex")) {
+
+        let dex = db.getPeekdex();
+        dex.forEach((item, i) => {
+          console.log(item.id + ": " + item.username);
+        });
+
+
+        //console.log(JSON.stringify( db.getPeekmons(sender.twitchid, {"shiny": false}) ));
+        return true;
+    }
+    if (data.startsWith("!")) {
+      return true;
+    }
     return false;
 
 }
 
 function systemMessage(message) {
-    sendToAll("SYSTEM: " + message);
+    //sendToAll("SYSTEM: " + message);
 }
-var IAC     = 255; // interpret as command
-var DONT    = 254; // you are not to use option
-var DO      = 253; // please use option
-var WONT    = 252; // I won't use option
-var WILL    = 251; // I will use option
-var SB      = 250; // sub-negotiation
-var GA      = 249; // Go-ahead
-var EL      = 248; // Erase line
-var EC      = 247; // Erase character
-var AYT     = 246; // Are you there?
-var AO      = 245; // Abort output (but let prog finish)
-var IP      = 244; // Interrupt (permanently)
-var BREAK   = 243;
-var DM      = 242; // Data mark
-var NOP     = 241;
-var SE      = 240; // End sub-negotiation
-var EOR     = 239; // End of record (transparent mode)
-var ABORT   = 238; // Abort process
-var SUSP    = 237; // Suspend process
-var EOF     = 236; // End of file
-var SYNCH   = 242;
-
-var OPT_BINARY            = 0; // RFC 856
-var OPT_ECHO              = 1; // RFC 857
-var OPT_SUPPRESS_GO_AHEAD = 3; // RFC 858
-var OPT_STATUS            = 5; // RFC 859
-var OPT_TIMING_MARK       = 6; // RFC 860
-var OPT_TTYPE             = 24; // RFC 930, 1091
-var OPT_WINDOW_SIZE       = 31; // RFC 1073
-var OPT_LINE_MODE         = 34; // RFC 1184
-var OPT_NEW_ENVIRON       = 39; // RFC 1572
 
 function telnetCommand (dodontwill, command, client) {
-  var bytes = [IAC, dodontwill];
+  var bytes = [CODES.IAC, dodontwill];
   if (command instanceof Array) {
     bytes.push.apply(bytes, command);
   } else {
@@ -191,25 +200,40 @@ function welcomeSequence(client) {
 
     client.unique_id = generateId(10);
     client.seed = (Math.random() + 1).toString(36).substring(2);
-    telnetCommand(WILL, OPT_ECHO, client);
-    telnetCommand(WILL, OPT_SUPPRESS_GO_AHEAD, client);
-    telnetCommand(WONT, OPT_LINE_MODE, client);
-    telnetCommand(DO, OPT_WINDOW_SIZE, client);
-    telnetCommand(DO, OPT_NEW_ENVIRON, client);
+    telnetCommand(CODES.WILL, CODES.OPT_ECHO, client);
+    telnetCommand(CODES.WILL, CODES.OPT_SUPPRESS_GO_AHEAD, client);
+    telnetCommand(CODES.WONT, CODES.OPT_LINE_MODE, client);
+    telnetCommand(CODES.DO, CODES.OPT_WINDOW_SIZE, client);
+    telnetCommand(CODES.DO, CODES.OPT_NEW_ENVIRON, client);
 
     client.writeln = function (text) {client.write(text + "\r\n");}
     client.loggedIn = false;
     client.username = "anonymous";
     client.displayname = "Anonymous";
+    client.colors = [255,255,255];
     client.windowSize = [40,25];
     client.buffer = "";
 
 
 }
 function processInput(client, data) {
-  const encoder = new TextEncoder();
+  let iacCommands = parseIAC(data)
+  //console.log(JSON.stringify(ret))
+  if (iacCommands) {
+    if (iacCommands["window_size"]) {
+      client.windowSize = [iacCommands["window_size"].width, iacCommands["window_size"].height];
+    }
+  }
+  // if (data[0] === 255 && data[1] === 250 && data[2] === 31) {
+  //   // Read the width and height from the command
+  //   const width = (data[3] << 8) + data[4];
+  //   const height = (data[5] << 8) + data[6];
+  //   console.log(width, height);
+  //   client.windowSize = [width, height];
+  // }
+  // console.log(JSON.stringify(data));
   let bytes = [];
-
+  data = data.toString();
   if (data.charCodeAt(0) == 0x03 && data.length == 1) {
     client.end();
   }
@@ -221,21 +245,6 @@ function processInput(client, data) {
     bytes.push(newByteSet);
   }
 
-  if (bytes[0][0] == IAC) {
-
-    // IAC
-    // console.log("oho, ein befehl");
-    try {
-      if (bytes[2][2] == OPT_WINDOW_SIZE) {
-        let x=(bytes[4][2]<128) ? bytes[4][2] : 127;
-        let y=(bytes[6][2]<128) ? bytes[6][2] : 127;
-        client.windowSize = [x, y];
-        listClients();
-      }
-    } catch (e) {
-      console.table(e, bytes);
-    }
-  }
   if (!client.loggedIn) {
     return;
   }
@@ -251,6 +260,10 @@ function processInput(client, data) {
     if (client.buffer.length == 0) {
       return;
     }
+    if (commands(client.buffer, client)) {
+      client.buffer = "";
+      return;
+    }
     sendToAll(client, client.buffer);
     client.buffer = "";
     return;
@@ -259,15 +272,21 @@ function processInput(client, data) {
 function clearScreen(client) {
 
 }
-function renderPrompt(client) {
-  client.write("\033[" + client.windowSize[1] + ";0H");
-  client.write(client.buffer.padEnd(parseInt(client.windowSize[0], 10)-2, "."));
-}
 function renderScreen(client) {
   // BORDER
   // clear screen
   client.write("\u001B[2J");
+  let thisLine = 2;
+  for (let chatLine=chatLog.length-client.windowSize[1]+4; chatLine<chatLog.length;chatLine++) {
+    thisLine++;
 
+    if (chatLog[chatLine]) {
+      client.write("\033[" + thisLine + ";3H");
+      let message = chatLog[chatLine].colorString + chatLog[chatLine].displayName + "\u001b[0m: " + chatLog[chatLine].message.substring(0,client.windowSize[0]-chatLog[chatLine].displayName.length-2-4);
+
+      client.write(message);
+    }
+  }
   for (let x=0; x<client.windowSize[0];x++) {
     switch (x) {
       case 0:
@@ -281,7 +300,7 @@ function renderScreen(client) {
         }
         break;
       case client.windowSize[1]:
-        client.write("\033[" + x + ";0H► " + client.buffer.substring(0,client.windowSize[0]-4));
+        client.write("\033[" + x + ";0H► " + client.buffer.substring(0,client.windowSize[0]-5) + "\033[5m_\033[0m");
         client.write("\033[" + x + ";" + String(client.windowSize[0]) + "H◄");
 
 
@@ -292,15 +311,7 @@ function renderScreen(client) {
 
     }
   }
-  let thisLine = 2;
-  for (let chatLine=chatLog.length-client.windowSize[1]+4; chatLine<chatLog.length;chatLine++) {
-    thisLine++;
 
-    if (chatLog[chatLine]) {
-      client.write("\033[" + thisLine + ";3H");
-      client.write(chatLog[chatLine].substring(0,client.windowSize[0]-4));
-    }
-  }
 }
 function loginScreen(client) {
   // clear screen
@@ -322,13 +333,6 @@ var server = net.createServer(function(client) {
     client.on('data', function(data) {
         let thisClient = getClientByID(client["unique_id"]);
 
-        let origdata = data;
-        //data = data.toString().replace(/ {4}|[\t\n\r]/gm,'');
-        data = data.toString();
-        if (data.length <=0) {
-            console.log("Gefiltertes Zeug:", origdata);
-            return;
-        }
         processInput(thisClient, data);
         if (thisClient.loggedIn == true) {
           renderScreen(client);
