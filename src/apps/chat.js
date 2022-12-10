@@ -30,9 +30,13 @@ function sendToAll(client, data) {
     chatLog = chatLog.slice(-150);
     const size = clients.length;
     console.table(chatLog);
+
     for(i=0;i<size;i++) {
+
         if (clients[i].loggedIn) {
-          if (clients[i].app="chat") {
+          createUserData(clients[i]);
+          clients[i].appData.chat.nofitifications.push({"type": "chat", "headline", "Neue Chatnachricht"});
+          if (clients[i].app=="chat") {
             renderScreen(clients[i]);
           }
         }
@@ -44,6 +48,7 @@ function sendToAll(client, data) {
 function createUserData(client) {
   client.appData.chat = client.appData.chat || {};
   client.appData.chat.buffer = client.appData.chat.buffer || "";
+  client.appData.chat.nofitifications = client.appData.chat.nofitifications || [];
 
 }
 function renderScreen(client) {
