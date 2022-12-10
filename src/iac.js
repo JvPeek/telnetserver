@@ -1,4 +1,4 @@
-const DEBUG = false
+const DEBUG = true;
 var IAC_CODES = {
   IAC     : 255, // interpret as command
   DONT    : 254, // you are not to use option
@@ -32,6 +32,19 @@ var IAC_CODES = {
   OPT_NEW_ENVIRON       : 39, // RFC 1572
 }
 
+var IAC_OPT_CODES = {
+  NEW_ENV: {
+    IS: 0,
+    SEND: 1,
+    INFO: 2,
+
+    VAR: 0,
+    VALUE: 1,
+    ESC: 2,
+    USERVAR: 3,
+  }
+}
+
 var IAC_CODE_NAMES = {
 
 }
@@ -39,13 +52,73 @@ var IAC_CODE_NAMES = {
 for([key, value] of Object.entries(IAC_CODES)) {
   IAC_CODE_NAMES[value] = key
 }
-console.log(IAC_CODE_NAMES)
+//console.log(IAC_CODE_NAMES)
 
+function str_to_ascii(str) {
+  return str.split("").map(x => x.charCodeAt())
+}
+
+function telnet_command(code, ...args) {
+  args = args.flat()
+  return [IAC_CODES.IAC, code].concat(args)
+}
+
+function parseENV(data) {
+  let ret = {}
+  let type = 0
+  let state = 0
+  let index = 2
+  let var_data = []
+  let val_data = []
+  while (index < data.length) {
+    let current = data[index]
+    if (current < 4) {
+      state = 0
+    }
+    if (current >= 4 && state == 0) {
+      state = 1
+    }
+    if (current == 1) {
+      index += 1
+      if (index >= data.length) {
+        break;
+      }
+      current = data[index]
+      state = 2
+    }
+    switch(state) {
+      case 0: //search var type
+      if (var_data.length > 0) {
+        ret[String.fromCharCode(...var_data)] = String.fromCharCode(...val_data)
+      }
+      var_data = []
+      val_data = []
+      type = current
+      break;
+      case 1: //search var name
+      var_data.push(current)
+      break;
+      case 2: //search var value
+      val_data.push(current)
+      break;
+    }
+    index++
+  }
+  if (var_data.length > 0) {
+    ret[String.fromCharCode(...var_data)] = String.fromCharCode(...val_data)
+  }
+  return ret
+}
 
 function parseIAC(data)
 {
   //returned IAC data
   let ret_data = {};
+  ret_data.containsData = false;
+  ret_data[IAC_CODE_NAMES[IAC_CODES.WILL]] = []
+  ret_data[IAC_CODE_NAMES[IAC_CODES.WONT]] = []
+  ret_data[IAC_CODE_NAMES[IAC_CODES.DO]]   = []
+  ret_data[IAC_CODE_NAMES[IAC_CODES.DONT]] = []
   let index = 0;
   let state = 0;
   while (index < data.length)
@@ -57,6 +130,7 @@ function parseIAC(data)
         if (current == IAC_CODES.IAC)
         {
           state = 1;
+          ret_data.containsData = true;
         }
         break;
       case 1: //parsing IAC code
@@ -110,6 +184,18 @@ function parseIAC(data)
               index += 4;
             }
             break;
+          case IAC_CODES.OPT_NEW_ENVIRON:
+            let start_index = index
+            while(++index < data.length) {
+              current = data[index]
+              if (current == 255) {
+                index--
+                state = 0
+                break;
+              }
+            }
+            ret_data.ENV = parseENV(data.slice(start_index, index+1))
+          break;
           //case IAC_CODES.OPT_TTYPE:
           //  state = 4;
           //  break;
@@ -123,9 +209,11 @@ function parseIAC(data)
   }
   if(ret_data.unhandled || DEBUG) {
     ret_data.data = data.toJSON().data
+    ret_data.string = data.toString()
+    ret_data.ascii_string = String.fromCharCode(...data)
   }
 
   return ret_data;
 }
 
-module.exports = {IAC_CODES: IAC_CODES, parseIAC: parseIAC}
+module.exports = {IAC_CODES: IAC_CODES, IAC_CODE_NAMES: IAC_CODE_NAMES, IAC_OPT_CODES: IAC_OPT_CODES, parseIAC: parseIAC, telnet_command: telnet_command, str_to_ascii: str_to_ascii}

@@ -1,10 +1,12 @@
 const DEBUG=false;
-let baseWindow = {
-  "mode":"fullscreen",
-  "module": "chat"
+let autostart = {
+  "app":"home"
 }
-function getWindows(client) {
-  return client.windows || [baseWindow];
+function getApp(client) {
+  if (!client.app) {
+    client.app = autostart;
+  }
+  return client.app;
 }
 
-module.exports = {getWindows: getWindows}
+module.exports = {getApp: getApp}
