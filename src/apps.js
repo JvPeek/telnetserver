@@ -1,6 +1,6 @@
 const DEBUG=false;
 appList = [];
-apps={};
+localApps={};
 function getAppList() {
   return appList;
 }
@@ -10,14 +10,25 @@ function addApp(appInfo) {
   return true;
 }
 addApp({"id":"home", "label": "Startseite", "hidden": true});
-addApp({"id":"chat", "label": "Chat", "info": "Unterhalte dich mit anderen Nutzern, die auch alle keine Freunde haben"});
+addApp({"id":"chat", "label": "Chat", "info": "Unterhalte dich mit anderen Nutzern, die auch alle keine Freunde haben", "notifications": true});
 addApp({"id":"peekdex", "label": "Dr. Greens PC", "info": "Sieh im Peekdex nach, welche Peekmon dir noch fehlen"});
 addApp({"id":"userlist", "label": "Userliste", "info": "Eingeloggte User und wo man sie finden kann"});
+addApp({"id":"logout", "label": "Abmelden", "info": "Session beenden"});
+
 function loadApps() {
   for (var i = 0; i < appList.length; i++) {
-    if (!apps[appList[i].id]) {
-      apps[appList[i].id] = require("./apps/" + appList[i].id + ".js");
+    if (!localApps[appList[i].id]) {
+      localApps[appList[i].id] = require("./apps/" + appList[i].id + ".js");
     }
   }
 }
-module.exports = {getAppList: getAppList, addApp: addApp, appList: apps};
+function launchApp(client, app) {
+  console.log("starte app " + app + " für " + client.displayname);
+  if (localApps[app]?.startUp !== undefined) {
+    localApps[app].startUp(client);
+  }
+
+  client.app = app;
+  //console.log(localApps);
+}
+module.exports = {getAppList: getAppList, addApp: addApp, appList: localApps, launchApp: launchApp};

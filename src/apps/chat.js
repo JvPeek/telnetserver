@@ -29,13 +29,13 @@ function sendToAll(client, data) {
     chatLog.push(chatObject);
     chatLog = chatLog.slice(-150);
     const size = clients.length;
-    console.table(chatLog);
+    
 
     for(i=0;i<size;i++) {
 
         if (clients[i].loggedIn) {
           createUserData(clients[i]);
-          clients[i].appData.chat.nofitifications.push({"type": "chat", "headline", "Neue Chatnachricht"});
+          clients[i].appData.chat.nofitifications.push({"type": "chat", "headline": "Neue Chatnachricht"});
           if (clients[i].app=="chat") {
             renderScreen(clients[i]);
           }
