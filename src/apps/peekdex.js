@@ -84,6 +84,15 @@ function renderScreen(client) {
 
 
   let thisLine = 2;
+  let caughtPeekmonsFromDex = 0;
+  for (var i = 0; i < peekdex.length; i++) {
+    if (peekmonList[peekdex[i].username.toLowerCase()] && peekmonList[peekdex[i].username.toLowerCase()].length > 0) {
+      caughtPeekmonsFromDex++;
+    }
+  }
+  overview += "\033[" + thisLine + ";2H";
+
+  let numbers = "\033[2;" + (client.windowSize[0]-10) + "H" + caughtPeekmonsFromDex + "/" + peekdex.length;
   for (var i = client.appData.peekdex.cursorPosition; i < peekdex.length; i++) {
     if (!peekdex[i]) {
       continue;
@@ -106,6 +115,7 @@ function renderScreen(client) {
     thisLine++;
 
   }
+  overview += numbers;
   overview += buildFrame(client);
   overview.split("\n").forEach((item, i) => {
     client.write(item);
