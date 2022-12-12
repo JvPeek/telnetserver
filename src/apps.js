@@ -9,6 +9,7 @@ function addApp(appInfo) {
   loadApps();
   return true;
 }
+
 addApp({"id":"home", "label": "Startseite", "hidden": true});
 addApp({"id":"chat", "label": "Chat", "info": "Unterhalte dich mit anderen Nutzern, die auch alle keine Freunde haben", "notifications": true});
 addApp({"id":"peekdex", "label": "Dr. Greens PC", "info": "Sieh im Peekdex nach, welche Peekmon dir noch fehlen"});
@@ -24,8 +25,9 @@ function loadApps(reload=false) {
 
   for (var i = 0; i < appList.length; i++) {
     if (!localApps[appList[i].id] || reload) {
-      nocache("./apps/" + appList[i].id + ".js");
-      localApps[appList[i].id] = require("./apps/" + appList[i].id + ".js");
+      let fileName = "./apps/" + appList[i].id + ".js";
+      nocache(fileName);
+      localApps[appList[i].id] = require(fileName);
     }
   }
 }
