@@ -4,13 +4,11 @@ require('dotenv').config()
 const fs = require('fs');
 const background = String(fs.readFileSync('../artwork/house.utf8ans')).replaceAll("\r", "").split('\n');
 function isVisible(value, index, sourceArray, client) {
-  console.log(value.level + " " + index + " " + client);
   return !value.hidden;
 }
 function getFilteredAppList(client) {
   return global.getAppList().filter(
     function(value) {
-      console.log(client.level + " -- " + value.level)
       if (client.level < (value.level || 0)) {
         return false;
       }
@@ -63,12 +61,6 @@ function renderScreen(client) {
   drawBackground(client);
   drawMenu(client);
   return;
-  console.log(JSON.stringify(client.appData.home));
-
-  let welcomeString = centerAlign("Where do you want to go today?", client.windowSize[0]);
-
-  client.writeln("\n" + welcomeString + "\n");
-
 }
 function launchApp(client, app) {
   global.apps.launchApp(client, app);
