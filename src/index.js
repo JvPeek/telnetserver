@@ -7,6 +7,7 @@ const {IAC_CODES, IAC_OPT_CODES, parseIAC, telnet_command, str_to_ascii} = requi
 const wm = require("./windowmanager.js");
 const db = require("./database.js");
 const apps = require("./apps.js");
+global.apps = apps;
 
 const options = {
   // Clean session
@@ -41,7 +42,17 @@ mqttclient.on('message', function (topic, message) {
 
 });
 
+function updateAutoLogout(client) {
+  if (client.timeOut) {
+    clearTimeout(client.timeOut);
+  }
 
+  client.timeOut = setTimeout(() => {
+    apps.launchApp(client, "logout");
+  }, "600000")
+
+
+}
 clients = [];
 function listClients() {
     let clientList = [];
@@ -194,9 +205,12 @@ function welcomeSequence(client) {
     client.defaultApp = process.env.DEFAULT_APP;
     client.app = client.defaultApp;
     client.appData = {};
+
     console.log(JSON.stringify(apps.appList.sample));
 }
 function processInput(client, data) {
+
+  updateAutoLogout(client);
   let iacCommands = parseIAC(data)
   if (client.debug || true) {
     console.log(JSON.stringify(iacCommands))
@@ -218,6 +232,7 @@ function processInput(client, data) {
       client.env = iacCommands["ENV"];
     }
   }
+
   let bytes = [];
   data = data.toString();
   if (data.charCodeAt(0) == 0x03 && data.length == 1) {

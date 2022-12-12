@@ -59,7 +59,7 @@ function renderScreen(client) {
 
 }
 function launchApp(client, app) {
-  client.app = app;
+  global.apps.launchApp(client, app);
 }
 function moveCursor(client, direction) {
 
