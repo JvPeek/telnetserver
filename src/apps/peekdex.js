@@ -31,6 +31,7 @@ function loadPeekmons(client) {
   connection.query(thisQuery, function(err, rows, fields) {
     if (err) {
       console.log('Error executing query: ', err.stack);
+      connection.end();
       return;
     }
     client.appData.peekdex.peekmons = rows;
@@ -57,6 +58,7 @@ const loadPeekdex = () => {
   connection.query('SELECT * FROM peekdex;', function(err, rows, fields) {
     if (err) {
       console.log('Error executing query: ', err.stack);
+      connection.end();
       return;
     }
     peekdex = rows;
@@ -90,7 +92,7 @@ function renderScreen(client) {
       break;
     }
 
-    let colorCode = "\u001b[1;30m";
+    let colorCode = "\u001b[1;37m";
     if (peekmonList[peekdex[i].username.toLowerCase()] && peekmonList[peekdex[i].username.toLowerCase()].length > 0) {
       colorCode  = "\u001b[1;32m";
     }
