@@ -14,14 +14,12 @@ function createUserData(client) {
 
 }
 function renderScreen(client) {
-
   client.write("\u001B[2J");
   client.write("\033[0;0H");
   let userList = global.getUserList();
   for (var i = 0; i < userList.length; i++) {
-    let colorString = "\u001b[38;2;" + client.color[0] + ";" + client.color[1] + ";" + client.color[2] + "m";
-
-    client.writeln(colorString + userList[i].displayname + "\u001b[0m: " + userList[i].app);
+    let colorString = "\u001b[38;2;" + String(userList[i].color[0]) + ";" + String(userList[i].color[1]) + ";" + String(userList[i].color[2]) + "m";
+    client.writeln(colorString + "OOO" + userList[i].displayname + "\u001b[0m: " + userList[i].app);
 
   }
 }
@@ -36,4 +34,11 @@ function processInput(client, data, meta) {
       break;
   }
 }
-module.exports = {renderScreen: renderScreen, processInput: processInput};
+
+// gets called every time the user enters the app.
+function startUp(client) {
+  createUserData(client);
+
+}
+
+module.exports = {renderScreen: renderScreen, processInput: processInput, startUp: startUp};
