@@ -3,8 +3,20 @@ require('dotenv').config()
 
 const fs = require('fs');
 const background = String(fs.readFileSync('../artwork/house.utf8ans')).replaceAll("\r", "").split('\n');
-function isVisible(value) {
+function isVisible(value, index, sourceArray, client) {
+  console.log(value.level + " " + index + " " + client);
   return !value.hidden;
+}
+function getFilteredAppList(client) {
+  return global.getAppList().filter(
+    function(value) {
+      console.log(client.level + " -- " + value.level)
+      if (client.level < (value.level || 0)) {
+        return false;
+      }
+      return !value.hidden;
+    }
+  );
 }
 function centerAlign(text, width) {
   let leftOvers = width - text.length;
@@ -34,7 +46,7 @@ function drawMenu(client) {
   const menuDotActive = "\u001b[1;33m■\u001b[37m ";
   const menuDot = "\u001b[1;30m■\u001b[0m ";
 
-  let appList = global.getAppList().filter(isVisible);
+  let appList = getFilteredAppList(client);
 
 
   for (var i = 0; i < appList.length; i++) {
@@ -63,7 +75,7 @@ function launchApp(client, app) {
 }
 function moveCursor(client, direction) {
 
-  let appList = global.getAppList().filter(isVisible);
+  let appList = getFilteredAppList(client);
 
   switch (direction) {
     case 0:
@@ -81,7 +93,7 @@ function moveCursor(client, direction) {
   }
 }
 function processInput(client, data, meta) {
-  let appList = global.getAppList().filter(isVisible);
+  let appList = getFilteredAppList(client);
 
   switch (meta.type) {
     case "direction":
