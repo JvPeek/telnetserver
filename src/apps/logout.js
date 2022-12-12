@@ -6,22 +6,23 @@ function createUserData(client) {
   client.appData[appName] = client.appData[appName] || {};
 }
 function checkLogoff(client, firstLaunch=false) {
+
   console.log("Checking logoffTime: " + client.appData[appName].logoffTime + " - " + Date.now());
   if (client.app != appName && !firstLaunch) {
     client.appData[appName].logoffTime = undefined;
     return;
   }
+  renderScreen(client);
   if (client.appData[appName].logoffTime < Date.now()) {
     client.end();
   }
   else {
-    renderScreen(client);
+
     setTimeout(checkLogoff, 1000, client);
   }
 }
 function renderScreen(client) {
-  let seconds = Math.floor((client.appData[appName].logoffTime - Date.now())/1000);
-  drawMessage(client, "Du wirst in " + seconds + "\nSekunden ausgeloggt.\n\nESC drücken\nzum Abbrechen.");
+  drawMessage(client, "Du wirst in 10\nSekunden ausgeloggt.\n\nESC drücken\nzum Abbrechen.");
 }
 
 function processInput(client, data, meta) {
