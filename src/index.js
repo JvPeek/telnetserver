@@ -5,7 +5,6 @@ const mqtt = require('mqtt');
 const {IAC_CODES, IAC_OPT_CODES, parseIAC, telnet_command, str_to_ascii} = require('./iac.js');
 
 const wm = require("./windowmanager.js");
-const db = require("./database.js");
 const apps = require("./apps.js");
 global.apps = apps;
 
