@@ -12,6 +12,7 @@ function addApp(appInfo) {
 
 addApp({"id":"home", "label": "Startseite", "hidden": true});
 addApp({"id":"chat", "label": "Chat", "info": "Unterhalte dich mit anderen Nutzern, die auch alle keine Freunde haben", "notifications": true});
+addApp({"id":"pixel", "label": "Pixels", "info": "Eine Leinwand, viele Künstler. Du bist deine Chatfarbe.", "level": 5});
 addApp({"id":"peekdex", "label": "Dr. Greens PC", "info": "Sieh im Peekdex nach, welche Peekmon dir noch fehlen"});
 addApp({"id":"userlist", "label": "Userliste", "info": "Eingeloggte User und wo man sie finden kann"});
 addApp({"id":"reloadapps", "label": "reload apps", "info": "Debugfunktion: reloadApps", "level": 100});
