@@ -16,7 +16,7 @@ function generateCanvas(template="black") {
 
           break;
         default:
-        canvas[x][y] = {"c": [10,10,10]};
+        canvas[x][y] = {"c": [127,127,127]};
 
       }
     }
@@ -100,19 +100,26 @@ function directionInput(client, data, meta) {
 
 }
 // gets called every time the screen is refreshed while the app is open.
+function isTooSmall(client) {
+    windowMinSize = [(canvasSize[0]+2)*2, (canvasSize[1]+4)];
+    return (client.windowSize[0] < windowMinSize[0] || client.windowSize[1] < windowMinSize[1])
+
+}
 function renderScreen(client) {
-  windowMinSize = [(canvasSize[0]+2)*2, (canvasSize[1]+2)];
-  if (client.windowSize[0] < windowMinSize[0] || client.windowSize[1] < windowMinSize[1]) {
-      client.write("\u001B[2J");
-      client.write("\033[1;0H");
-      client.write("Digga, dein Fenster muss");
 
-      client.write("\033[2;0H");
-      client.write("mindestens " + windowMinSize[0] + "x" + windowMinSize[1] + " Zeichen sein.");
+  if (isTooSmall(client)) {
+    windowMinSize = [(canvasSize[0]+2)*2, (canvasSize[1]+4)];
 
-      client.write("\033[4;0H");
-      client.write("Verpiss dich mal.")
-      return;
+    client.write("\u001B[2J");
+    client.write("\033[1;0H");
+    client.write("Digga, dein Fenster muss");
+
+    client.write("\033[2;0H");
+    client.write("mindestens " + windowMinSize[0] + "x" + windowMinSize[1] + " Zeichen sein.");
+
+    client.write("\033[4;0H");
+    client.write("Verpiss dich mal.")
+    return;
   }
   client.write("\u001B[2J");
   client.write("\033[0;0H");
@@ -129,6 +136,9 @@ function renderScreen(client) {
 
 // gets called on user input inside the app.
 function processInput(client, data, meta) {
+  if (isTooSmall(client)) {
+    return;
+  }
   switch (meta.type) {
     case "enter":
       setPixel(client, client.appData[appName].cursor[0], client.appData[appName].cursor[1])
