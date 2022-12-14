@@ -55,9 +55,9 @@ function updateAutoLogout(client) {
 clients = [];
 function listClients() {
     let clientList = [];
-    clientList.push(["username", "displayname", "Twitch ID", "unique id", "seed", "logged in?", "x", "y", "ENV"]);
+    clientList.push(["username", "displayname", "Twitch ID", "unique id", "seed", "logged in?", "x", "y", "level"]);
     for (let i=0; i<clients.length;i++) {
-        clientList.push([clients[i].username, clients[i].displayname, clients[i].twitchid, clients[i].unique_id, clients[i].seed, clients[i].loggedIn, clients[i].windowSize[0], clients[i].windowSize[1], clients[i].env]);
+        clientList.push([clients[i].username, clients[i].displayname, clients[i].twitchid, clients[i].unique_id, clients[i].seed, clients[i].loggedIn, clients[i].windowSize[0], clients[i].windowSize[1], clients[i].level]);
     }
     console.table(clientList);
 }
@@ -78,8 +78,7 @@ function tryLogin(otpInfo) {
     // newClient.write(Buffer.from([255,250, 31]))
     // newClient.write(Buffer.from([255, 240]))
     renderScreen(newClient);
-    console.log(newClient);
-    systemMessage("Willkommen, " + otpInfo.displayname + "!");
+
     listClients();
 }
 
@@ -135,40 +134,6 @@ function userList(sender) {
     sender.write(userListReadable);
 }
 
-function commands(data, sender) {
-    if (data.startsWith("!clients")) {
-        listClients();
-        return true;
-    }
-    if (data.startsWith("!app")) {
-        console.table(wm.getApp(sender));
-        return true;
-    }
-    if (data.startsWith("!debugme")) {
-        sender.debug = true;
-    }
-    if (data.startsWith("!exit")) {
-        sender.end("Ausgeloggt");
-        removeClientByID(sender["unique_id"]);
-        return true;
-    }
-    if (data.startsWith("!who")) {
-        userList(sender);
-        return true;
-    }
-    if (data.startsWith("!chat")) {
-        sender.app = "chat";
-        return true;
-    }
-    if (data.startsWith("!dex")) {
-        sender.app = "sample";
-        return true;
-    }
-    if (data.startsWith("!")) {
-      return true;
-    }
-    return false;
-}
 
 function systemMessage(message) {
     //sendToAll("SYSTEM: " + message);
@@ -274,7 +239,7 @@ function processInput(client, data) {
     client.app = client.defaultApp;
     return;
   }
-  if (bytes.length > 1 && bytes[0][2] == 27 && bytes[1][2] == 91) {
+  if (bytes.length > 1 && bytes[0][2] == 27 && bytes[1][2] == 91 && bytes.length > 2) {
     let direction = bytes[2][2] - 65;
     if (direction < 0 || direction > 3 ) { return };
     let meta = {"type": DATATYPES.DIRECTION, "direction": direction}
