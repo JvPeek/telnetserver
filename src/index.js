@@ -74,7 +74,7 @@ function tryLogin(otpInfo) {
     newClient.loggedIn = true;
     newClient.seed = undefined;
     newClient.write(Buffer.from([255, 251, 31, 255, 250, 31, 255, 240]));
-    newClient.level = (newClient.username == "jvpeek") ? 100:0;
+    newClient.level = otpInfo.level || 0;
     // newClient.write(Buffer.from([255,250, 31]))
     // newClient.write(Buffer.from([255, 240]))
     renderScreen(newClient);
