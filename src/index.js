@@ -236,7 +236,7 @@ function processInput(client, data) {
   let bytes = [];
   data = data.toString();
   if (data.charCodeAt(0) == 0x03 && data.length == 1) {
-    client.end();
+    apps.launchApp(client, "logout");
   }
   for (let i =0 ; i<data.length; i++) {
     let newByteSet = [];
