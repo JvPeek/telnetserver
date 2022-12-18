@@ -48,7 +48,7 @@ function updateAutoLogout(client) {
 
   client.timeOut = setTimeout(() => {
     apps.launchApp(client, "logout");
-  }, "600000")
+  }, 600000)
 
 
 }
@@ -239,7 +239,7 @@ function processInput(client, data) {
     client.app = client.defaultApp;
     return;
   }
-  if (bytes.length > 1 && bytes[0][2] == 27 && bytes[1][2] == 91 && bytes.length > 2) {
+  if (bytes.length > 2 && bytes[0][2] == 27 && bytes[1][2] == 91) {
     let direction = bytes[2][2] - 65;
     if (direction < 0 || direction > 3 ) { return };
     let meta = {"type": DATATYPES.DIRECTION, "direction": direction}
