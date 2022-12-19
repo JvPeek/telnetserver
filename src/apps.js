@@ -12,12 +12,12 @@ function addApp(appInfo) {
 
 addApp({"id":"home", "label": "Startseite", "hidden": true});
 addApp({"id":"chat", "label": "Chat", "info": "Unterhalte dich mit anderen Nutzern, die auch alle keine Freunde haben", "notifications": true});
-addApp({"id":"pixel", "label": "Pixels", "info": "Eine Leinwand, viele Künstler. Du bist deine Chatfarbe.", "level": 5});
+addApp({"id":"pixel", "label": "Pixels", "info": "Eine Leinwand, viele Künstler. Jetzt mit kostenlosen Farben!"});
 addApp({"id":"peekdex", "label": "Dr. Greens PC", "info": "Sieh im Peekdex nach, welche Peekmon dir noch fehlen"});
 addApp({"id":"userlist", "label": "Userliste", "info": "Eingeloggte User und wo man sie finden kann"});
 addApp({"id":"reloadapps", "label": "reload apps", "info": "Debugfunktion: reloadApps", "level": 100});
+addApp({"id":"modtools", "label": "Mod Tools", "info": "Zusatzfunktionen für Moderatoren", "level": 50});
 addApp({"id":"logout", "label": "Abmelden", "info": "Session beenden"});
-
 function reloadApps() {
   loadApps(true);
 }

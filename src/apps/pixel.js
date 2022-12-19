@@ -5,6 +5,18 @@ var fs = require('fs');
 const appName = "pixel";
 const canvasSize = [32,32];
 const dataFolder = './appData/' + appName + '/';
+const colors = [];
+const colorPalette = [
+  [255,105,97],
+  [255,180,128],
+  [248, 243, 141],
+  [66, 214, 164],
+  [8, 202, 209],
+  [89, 173, 246],
+  [157, 148, 255],
+  [199, 128, 232],
+  [32,32,32]
+]
 var canvas = [];
 function generateCanvas(template="black") {
   for (var x = 0; x < canvasSize[0]; x++) {
@@ -44,16 +56,17 @@ function callback(e) {
 function createUserData(client) {
   // If our object doesn't exist, we create it.
   client.appData[appName] = client.appData[appName] || {};
+  client.appData[appName].paintColor = client.appData[appName].paintColor || client.color;
   client.appData[appName].cursor = client.appData[appName].cursor || [canvasSize[0],canvasSize[1]];
 }
 function refreshClients() {
 
 }
-function setPixel(client, x, y) {
+function setPixel(client, x, y, color = client.color) {
   if (x >= canvasSize[0] || y >= canvasSize[1]) {
     return null;
   }
-  canvas[x][y] = {"c": client.color, "author": client.username};
+  canvas[x][y] = {"c": color, "author": client.username};
   saveCanvas();
 }
 function getPixel(x, y, cursor="  ") {
@@ -66,6 +79,19 @@ function getScreenCoordString(x, y) {
   output[1] = 2 + y*2;
   let returnString = ("\033[" + output[0] + ";" + output[1] + "H");
   return returnString;
+}
+function drawColorPalette(client) {
+  let colorPaletteString = "\033[0;3H";
+  for (let i=0; i<colorPalette.length; i++) {
+    let colorString = "\u001b[48;2;" + String(colorPalette[i][0]) + ";" + String(colorPalette[i][1]) + ";"  + + String(colorPalette[i][2]) + "m";
+    let symbol = client.appData[appName].paintColor == colorPalette[i] ? "▒█▒" : (i+1)
+    colorPaletteString += colorString + " " + symbol + " \u001b[0m " ;
+  }
+
+  let colorString = "   \u001b[48;2;" + String(client.color[0]) + ";" + String(client.color[1]) + ";"  + + String(client.color[2]) + "m";
+  let symbol = client.appData[appName].paintColor == client.color ? "▒█▒" : "0"
+  colorPaletteString += colorString + " " + symbol + " \u001b[0m " ;
+  client.write(colorPaletteString);
 }
 function updateStatusBar(client) {
 
@@ -131,6 +157,7 @@ function renderScreen(client) {
       client.write(getPixel(x, y, (x==client.appData[appName].cursor[0] || y==client.appData[appName].cursor[1]) ? "▒▒" : "██"));
     }
   }
+  drawColorPalette(client);
   updateStatusBar(client);
 }
 
@@ -141,12 +168,18 @@ function processInput(client, data, meta) {
   }
   switch (meta.type) {
     case "enter":
-      setPixel(client, client.appData[appName].cursor[0], client.appData[appName].cursor[1])
+      setPixel(client, client.appData[appName].cursor[0], client.appData[appName].cursor[1], client.appData[appName].paintColor)
       break;
     case "alpha":
       if (data == " ") {
-        setPixel(client, client.appData[appName].cursor[0], client.appData[appName].cursor[1])
+        setPixel(client, client.appData[appName].cursor[0], client.appData[appName].cursor[1], client.appData[appName].paintColor)
       }
+
+      for (let i = 1; i<=9; i++) {
+        if (data == String(i)) { client.appData[appName].paintColor = colorPalette[i-1] }
+      }
+      if (data == "0") { client.appData[appName].paintColor = client.color }
+
       if (data == "N" && client.level >= 10) {
         generateCanvas();
       }
