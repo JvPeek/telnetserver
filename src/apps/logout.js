@@ -7,7 +7,7 @@ function createUserData(client) {
 }
 function checkLogoff(client, firstLaunch=false) {
 
-  console.log("Checking logoffTime: " + client.appData[appName].logoffTime + " - " + Date.now());
+  // console.log("Checking logoffTime: " + client.appData[appName].logoffTime + " - " + Date.now());
   if (client.app != appName && !firstLaunch) {
     client.appData[appName].logoffTime = undefined;
     return;
@@ -26,6 +26,10 @@ function renderScreen(client) {
 }
 
 function processInput(client, data, meta) {
+  if (meta.type = "enter") {
+
+      client.end();
+  }
 }
 function startUp(client) {
   createUserData(client);
