@@ -6,17 +6,29 @@ const appName = "pixel";
 const canvasSize = [32,32];
 const dataFolder = './appData/' + appName + '/';
 const colors = [];
-const colorPalette = [
-  [255,105,97],
-  [255,180,128],
-  [248, 243, 141],
-  [66, 214, 164],
-  [8, 202, 209],
-  [89, 173, 246],
-  [157, 148, 255],
-  [199, 128, 232],
-  [32,32,32]
+const colorPalettes = [
+  [
+    [255,105,97],
+    [255,180,128],
+    [248, 243, 141],
+    [66, 214, 164],
+    [8, 202, 209],
+    [89, 173, 246],
+    [157, 148, 255],
+    [199, 128, 232],
+    [32,32,32]
+  ],
+  [
+    [0,0,0],
+    [85,255,255],
+    [255,85,255],
+    [255,255,255],
+    [85,255,85],
+    [255,85,85],
+    [255,255,85]
+  ]
 ]
+let colorPalette = colorPalettes[0]
 var canvas = [];
 function generateCanvas(template="black") {
   for (var x = 0; x < canvasSize[0]; x++) {
@@ -175,13 +187,19 @@ function processInput(client, data, meta) {
         setPixel(client, client.appData[appName].cursor[0], client.appData[appName].cursor[1], client.appData[appName].paintColor)
       }
 
-      for (let i = 1; i<=9; i++) {
+      for (let i = 1; i<=colorPalette.length; i++) {
         if (data == String(i)) { client.appData[appName].paintColor = colorPalette[i-1] }
       }
       if (data == "0") { client.appData[appName].paintColor = client.color }
 
       if (data == "N" && client.level >= 10) {
         generateCanvas();
+      }
+      if (data == "p" && client.level >= 10) {
+        colorPalette = colorPalettes[0];
+      }
+      if (data == "P" && client.level >= 10) {
+        colorPalette = colorPalettes[1];
       }
       if (data == "R" && client.level >= 10) {
         generateCanvas("rainbow");
