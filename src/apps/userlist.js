@@ -42,7 +42,7 @@ function renderScreen(client)
       style = ansiiStyle()
     }
     let data = userList.map(user => [{style: {color: {r: user.color[0], g: user.color[0], b: user.color[0]}}, text: user.displayname}, {style: {color: 'white'}, text: user.app}])
-    table = printTable(data)
+    table = printTable(data, [{header: "User Name"}, {header: "Location"}])
     for (line of table) {
       client.writeln(line)
     }
