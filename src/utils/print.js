@@ -157,7 +157,8 @@ function defaultStyle()
 	};
 }
 
-function ansiiStyle() {
+function ansiiStyle()
+{
 	return {
 		style: {
 			color: "white"
@@ -219,25 +220,28 @@ function PrintLine(header, data, style, highlight)
 	{
 		if (data[c].style != undefined)
 		{
-			let text = data[c].text.padEnd(header[c].width)
-			if (text.length > header[c].width) {
-				text = text.substring(0, header[c].width - 3) + "..."
+			let text = data[c].text.padEnd(header[c].width);
+			if (text.length > header[c].width)
+			{
+				text = text.substring(0, header[c].width - 3) + "...";
 			}
 			printStack.push({style: data[c].style, text: text});
 		}
 		else if (data[c].color != undefined)
 		{
-			let text = data[c].text.padEnd(header[c].width)
-			if (text.length > header[c].width) {
-				text = text.substring(0, header[c].width - 3) + "..."
+			let text = data[c].text.padEnd(header[c].width);
+			if (text.length > header[c].width)
+			{
+				text = text.substring(0, header[c].width - 3) + "...";
 			}
 			printStack.push({style: createStyle(data[c].color, highlight), text: text});
 		}
 		else
 		{
-			let text = data[c].toString().padEnd(header[c].width)
-			if (text.length > header[c].width) {
-				text = text.substring(0, header[c].width - 3) + "..."
+			let text = data[c].toString().padEnd(header[c].width);
+			if (text.length > header[c].width)
+			{
+				text = text.substring(0, header[c].width - 3) + "...";
 			}
 			printStack.push({style: createStyle('white', highlight), text: text});
 		}
@@ -296,14 +300,21 @@ function colorPrint(stack, colorType = COLOR_FORMAT.TRUE)
 //color should either be a html code or an object with a html code
 function colorToAnsiiCode(color, bg = false, colorFormat = COLOR_FORMAT.TRUE)
 {
+	if (colorFormat == undefined || colorFormat == COLOR_FORMAT.NONE)
+	{
+		return "";
+	}
+
 	if (colorFormat == COLOR_FORMAT.TRUE)
 	{
 		if (color instanceof Object)
 		{
-			if (color.html){
+			if (color.html)
+			{
 				color = rgbFromHtml(color.html);
-			}else {
-				color = {r: color.r || 0, g: color.g || 0, b: color.b || 0}
+			} else
+			{
+				color = {r: color.r || 0, g: color.g || 0, b: color.b || 0};
 			}
 		} else if (color.startsWith("#"))
 		{
@@ -333,12 +344,19 @@ function colorToAnsiiCode(color, bg = false, colorFormat = COLOR_FORMAT.TRUE)
 	let colors = colorsByFormat(colorFormat);
 	if (color instanceof Object)
 	{
-		color = color.html;
+		if (color.html)
+		{
+			color = color.html;
+		} else
+		{
+			color = {r: color.r || 0, g: color.g || 0, b: color.b || 0};
+			color = rgbToHtml(color);
+		}
 	}
 	let match = colors.find(c => c.html == color || c.desc.toLowerCase() == color.toLowerCase());
 	if (!match && color.startsWith('#'))
 	{
-		match = findHtmlColorEquivalent(ns, color);
+		match = findHtmlColorEquivalent(color);
 	}
 	if (!match)
 	{
@@ -351,9 +369,6 @@ function colorToAnsiiCode(color, bg = false, colorFormat = COLOR_FORMAT.TRUE)
 	color = match.ansi;
 	switch (colorFormat)
 	{
-		case COLOR_FORMAT.NONE:
-		case undefined:
-			return "";
 		case COLOR_FORMAT[8]:
 		case COLOR_FORMAT[16]:
 			let bright = false;
@@ -384,6 +399,7 @@ function colorToAnsiiCode(color, bg = false, colorFormat = COLOR_FORMAT.TRUE)
 			}
 			return `\u001b[38;5;${color}m`;
 	}
+	return ""
 }
 
 
@@ -413,6 +429,11 @@ function rgbFromHtml(htmlCode)
 	let g = Number.parseInt('0x' + htmlCode.substring(3, 5));
 	let b = Number.parseInt('0x' + htmlCode.substring(5, 7));
 	return {r: r, g: g, b: b};
+}
+
+function rgbToHtml(color)
+{
+	return "#" + color.r.toString(16).padStart(2, '0') + color.g.toString(16).padStart(2, '0') + color.b.toString(16).padStart(2, '0');
 }
 
 function colorsByFormat(colorFormat = COLOR_FORMAT.TRUE)
