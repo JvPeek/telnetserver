@@ -69,7 +69,7 @@ function example()
 	];
 
 	// Free style, no columns, the table adjusts to contents
-	console.log(printTable(data));
+	console.log(printTable(data).join("\n"));
 
 	// Example of adding a break line in the middle of the table:
 	// data.push(null);
@@ -86,7 +86,7 @@ function example()
 		{header: 'Test2', width: 13},
 		{header: 'Test3', width: 20}
 	];
-	console.log(printTable(data, columns, defaultStyle()));
+	console.log(printTable(data, columns, defaultStyle()).join("\n"));
 }
 
 function printTable(data, columns = undefined, style = defaultStyle())
@@ -2232,6 +2232,6 @@ const COLORS = [
 ];
 
 
-example()
+//example()
 
 module.exports = {COLORS: COLORS, COLOR_FORMAT: COLOR_FORMAT, createStyle: createStyle, ansiiStyle: ansiiStyle, pctColor: pctColor, printTable: printTable, colorsByFormat: colorsByFormat, colorPrint: colorPrint};
