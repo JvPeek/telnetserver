@@ -171,7 +171,7 @@ function welcomeSequence(client) {
     client.app = client.defaultApp;
     client.appData = {};
 
-    console.log(JSON.stringify(apps.appList.sample));
+
 }
 function processInput(client, data) {
 
