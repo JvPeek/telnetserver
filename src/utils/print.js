@@ -2255,4 +2255,4 @@ const COLORS = [
 
 //example()
 
-module.exports = {COLORS: COLORS, COLOR_FORMAT: COLOR_FORMAT, createStyle: createStyle, ansiiStyle: ansiiStyle, pctColor: pctColor, printTable: printTable, colorsByFormat: colorsByFormat, colorPrint: colorPrint};
+module.exports = {COLORS: COLORS, COLOR_FORMAT: COLOR_FORMAT, createStyle: createStyle, defaultStyle: defaultStyle, ansiiStyle: ansiiStyle, pctColor: pctColor, printTable: printTable, colorsByFormat: colorsByFormat, colorPrint: colorPrint};
