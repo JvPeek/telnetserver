@@ -1,7 +1,7 @@
 const DEBUG = false;
 const appName = "userList";
 require('dotenv').config();
-import {printTable, defaultStyle, ansiiStyle} from "../utils/print";
+const {printTable, defaultStyle, ansiiStyle} = require("../utils/print.js");
 
 const styles = ["plain", "fancy", "ascii"];
 function centerAlign(text, width)
