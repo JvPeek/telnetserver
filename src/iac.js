@@ -1,4 +1,4 @@
-const DEBUG = true;
+const DEBUG = false;
 var IAC_CODES = {
   IAC     : 255, // interpret as command
   DONT    : 254, // you are not to use option

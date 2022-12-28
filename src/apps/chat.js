@@ -29,7 +29,7 @@ function sendToAll(client, data) {
     chatLog.push(chatObject);
     chatLog = chatLog.slice(-150);
     const size = clients.length;
-    
+
 
     for(i=0;i<size;i++) {
 
@@ -96,6 +96,9 @@ function processInput(client, data, meta) {
       client.appData.chat.buffer = client.appData.chat.buffer.slice(0,-1)
       break;
     case "enter":
+      if (client.appData.chat.buffer.length <= 0) {
+        return;
+      }
       sendToAll(client, client.appData.chat.buffer);
       break;
   }
