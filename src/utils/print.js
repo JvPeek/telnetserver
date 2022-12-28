@@ -126,6 +126,7 @@ function printTable(data, columns = undefined, style = defaultStyle())
 					longest = len;
 				}
 			}
+			longest = Math.max(longest, columns[i].header.length)
 			columns[i].width = Math.min(columns[i].maxWidth == undefined ? longest : columns[i].maxWidth, Math.max(columns[i].minWidth == undefined ? 0 : columns[i].minWidth, longest));
 		}
 	}
