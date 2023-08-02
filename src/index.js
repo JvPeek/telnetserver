@@ -6,6 +6,7 @@ const {IAC_CODES, IAC_OPT_CODES, parseIAC, telnet_command, str_to_ascii} = requi
 
 const wm = require("./windowmanager.js");
 const apps = require("./apps.js");
+const iac = require('./iac.js');
 global.apps = apps;
 
 const options = {
@@ -159,6 +160,7 @@ function welcomeSequence(client) {
     telnetCommand(IAC_CODES.WONT, IAC_CODES.OPT_LINE_MODE, client);
     telnetCommand(IAC_CODES.DO, IAC_CODES.OPT_WINDOW_SIZE, client);
     telnetCommand(IAC_CODES.DO, IAC_CODES.OPT_NEW_ENVIRON, client);
+    telnetCommand(IAC_CODES.DO, IAC_CODES.OPT_TTYPE, client);
 
     client.writeln = function (text) {client.write(text + "\r\n");}
     client.loggedIn = false;
@@ -168,8 +170,9 @@ function welcomeSequence(client) {
     client.windowSize = [40,25];
     client.buffer = "";
     client.defaultApp = process.env.DEFAULT_APP;
-    client.app = client.defaultApp;
+    client.app = client.defaultApp || "home";
     client.appData = {};
+    client.ttypes = []
 
 
 }
@@ -177,11 +180,11 @@ function processInput(client, data) {
 
   updateAutoLogout(client);
   let iacCommands = parseIAC(data)
-  if (client.debug || true) {
+  if ((client.debug || true) && iacCommands.containsData) {
     console.log(JSON.stringify(iacCommands))
   }
   if (iacCommands.containsData) {
-    if (iacCommands["WILL"].includes(39)) { //wenn der client bereit ist, sein env schicken, nach dem env fragen
+    if (iacCommands["WILL"].includes(IAC_CODES.OPT_NEW_ENVIRON)) { //wenn der client bereit ist, sein env schicken, nach dem env fragen
         client.write(Buffer.from(telnet_command(IAC_CODES.SB, IAC_CODES.OPT_NEW_ENVIRON, IAC_OPT_CODES.NEW_ENV.SEND,
         IAC_OPT_CODES.NEW_ENV.VAR, str_to_ascii("SYSTEMTYPE"),
         IAC_OPT_CODES.NEW_ENV.USERVAR, str_to_ascii("TERM"),
@@ -190,11 +193,22 @@ function processInput(client, data) {
         )))
         //client.write(Buffer.from([255, 250, 39, 1, 3, 84, 69, 82, 77, 0, 83, 89, 83, 84, 69, 77, 84, 89, 80, 69, 3, 83, 72, 69, 76, 76 , 255, 240]))
     }
+    if (iacCommands["WILL"].includes(IAC_CODES.OPT_TTYPE)) {
+      console.log("Requesting ttype")
+      client.write(Buffer.from(telnet_command(IAC_CODES.SB, IAC_CODES.OPT_TTYPE, IAC_OPT_CODES.TTYPE.SEND, telnet_command(IAC_CODES.SE))))
+    }
     if (iacCommands["window_size"]) {
       client.windowSize = [iacCommands["window_size"].width, iacCommands["window_size"].height];
     }
     if (iacCommands["ENV"]) {
       client.env = iacCommands["ENV"];
+    }
+    if (iacCommands["TTYPE"]) {
+      if (!client.ttypes.includes(iacCommands["TTYPE"])){
+        
+        client.ttypes.push(iacCommands["TTYPE"]);
+        client.write(Buffer.from(telnet_command(IAC_CODES.SB, IAC_CODES.OPT_TTYPE, IAC_OPT_CODES.TTYPE.SEND, telnet_command(IAC_CODES.SE))))
+      }
     }
   }
 
