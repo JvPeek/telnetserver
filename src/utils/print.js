@@ -29,12 +29,12 @@ const BAR = 4;		// Index of the straight vertical bar line character
  * 
  * @typedef {Object} Header
  * @property {string} header
- * @property {int=} width
- * @property {int=} minWidth
- * @property {int=} maxWidth
+ * @property {number=} width
+ * @property {number=} minWidth
+ * @property {number=} maxWidth
  * @property {string=} color
  * @property {string=} backColor
- * @property {int=} pad
+ * @property {number=} pad
  */
 
 const COLOR_FORMAT = {
@@ -56,6 +56,12 @@ const ANSII_DIVIDERS = [
 	['+', '+', '+', '-', '|'],
 	['+', '+', '+', '-', '|']
 ];
+
+const NO_DIVIDERS = [
+	['', '', '', '', ''],
+	['', '', '', '', ''],
+	['', '', '', '', '']
+]
 
 function example()
 {

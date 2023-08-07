@@ -194,7 +194,6 @@ function processInput(client, data) {
         //client.write(Buffer.from([255, 250, 39, 1, 3, 84, 69, 82, 77, 0, 83, 89, 83, 84, 69, 77, 84, 89, 80, 69, 3, 83, 72, 69, 76, 76 , 255, 240]))
     }
     if (iacCommands["WILL"].includes(IAC_CODES.OPT_TTYPE)) {
-      console.log("Requesting ttype")
       client.write(Buffer.from(telnet_command(IAC_CODES.SB, IAC_CODES.OPT_TTYPE, IAC_OPT_CODES.TTYPE.SEND, telnet_command(IAC_CODES.SE))))
     }
     if (iacCommands["window_size"]) {
@@ -205,9 +204,10 @@ function processInput(client, data) {
     }
     if (iacCommands["TTYPE"]) {
       if (!client.ttypes.includes(iacCommands["TTYPE"])){
-        
         client.ttypes.push(iacCommands["TTYPE"]);
         client.write(Buffer.from(telnet_command(IAC_CODES.SB, IAC_CODES.OPT_TTYPE, IAC_OPT_CODES.TTYPE.SEND, telnet_command(IAC_CODES.SE))))
+      }else {
+        console.log("" + client.displayname + " logged in with " + JSON.stringify(client.ttypes))
       }
     }
   }
