@@ -16,7 +16,7 @@ addApp({"id":"pixel", "label": "Pixels", "info": "Eine Leinwand, viele Künstler
 addApp({"id":"peekdex", "label": "Dr. Greens PC", "info": "Sieh im Peekdex nach, welche Peekmon dir noch fehlen"});
 addApp({"id":"userlist", "label": "Userliste", "info": "Eingeloggte User und wo man sie finden kann"});
 addApp({"id":"reloadapps", "label": "reload apps", "info": "Debugfunktion: reloadApps", "level": 100});
-addApp({"id":"modtools", "label": "Mod Tools", "info": "Zusatzfunktionen für Moderatoren", "level": 50});
+//addApp({"id":"modtools", "label": "Mod Tools", "info": "Zusatzfunktionen für Moderatoren", "level": 50});
 addApp({"id":"logout", "label": "Abmelden", "info": "Session beenden"});
 function reloadApps() {
   loadApps(true);
