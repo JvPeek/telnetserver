@@ -1,0 +1,9 @@
+A collection of term types used by systems
+
+Linux: xterm-256colors, xterm-kitty
+
+Windows: cmd/powershell: ["ANSI","VT100","VT52","VTNT"], Putty: xterm
+
+Capabilities list:
+TODO
+
