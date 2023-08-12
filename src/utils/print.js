@@ -75,7 +75,7 @@ function example()
 	];
 
 	// Free style, no columns, the table adjusts to contents
-	console.log(printTable(data).join("\n"));
+	console.log(printTable(data).text.join("\n"));
 
 	// Example of adding a break line in the middle of the table:
 	// data.push(null);
@@ -92,10 +92,10 @@ function example()
 		{header: 'Test2', width: 13},
 		{header: 'Test3', width: 20}
 	];
-	console.log(printTable(data, columns, defaultStyle()).join("\n"));
+	console.log(printTable(data, columns, defaultStyle()).text.join("\n"));
 }
-
-function printTable(data, columns = undefined, style = defaultStyle())
+//constraints: {maxWidth = -1, maxHeight = -1, column = -1, row = -1}
+function printTable(data, columns = undefined, style = defaultStyle(), constraints = undefined)
 {
 	// Create default columns if no definition were provided
 	let columnsProvided = true;
@@ -138,20 +138,28 @@ function printTable(data, columns = undefined, style = defaultStyle())
 	}
 
 	let out = [];
-	out.push(printBorder(columns, HEADER, style));
+	let temp = printBorder(columns, HEADER, style, constraints)
+	let maxWidth = temp.length
+	out.push(temp.text);
 	if (columnsProvided)
 	{
-		out.push(printHeader(columns, style));
-		out.push(printBorder(columns, DIVIDER, style));
+		out.push(printHeader(columns, style, constraints).text);
+		out.push(printBorder(columns, DIVIDER, style, constraints).text);
 	}
 	let i = 0;
 	for (const line of data)
 	{
-		out.push(PrintLine(columns, line, style, i++ % 2 == 0));
+		out.push(PrintLine(columns, line, style, i++ % 2 == 0, constraints).text);
 	}
-	out.push(printBorder(columns, FOOTER, style));
+	out.push(printBorder(columns, FOOTER, style, constraints).text);
 
-	return out;
+	let row = constraints?.row || 0
+	let maxRow = constraints?.maxHeight || 0
+	maxRow += row
+	if (!maxRow) {
+		maxRow = out.length
+	}
+	return {text: out.slice(row, maxRow), width: maxWidth, height: out.length};
 }
 
 function defaultStyle()
@@ -174,8 +182,17 @@ function ansiiStyle()
 	};
 }
 
+function noBordersStyle() {
+	return {
+		style: {
+			color: "white"
+		},
+		dividers: NO_DIVIDERS
+	};
+}
 
-function printBorder(header, borderIndex, style)
+
+function printBorder(header, borderIndex, style, constraints)
 {
 	let printStack = [];
 	printStack.push({style: {color: style.style.color}, text: style.dividers[borderIndex][OPENER]});
@@ -190,10 +207,10 @@ function printBorder(header, borderIndex, style)
 			printStack.push({style: {color: style.style.color}, text: style.dividers[borderIndex][SEPARATOR]});
 		}
 	}
-	return colorPrint(printStack);
+	return colorPrint(printStack, COLOR_FORMAT.TRUE, constraints);
 }
 
-function printHeader(header, style)
+function printHeader(header, style, constraints)
 {
 	let printStack = [];
 	printStack.push({style: {color: style.style.color}, text: style.dividers[HEADER][BAR]});
@@ -202,7 +219,7 @@ function printHeader(header, style)
 		printStack.push({style: {color: header[c].color || "white"}, text: header[c].header.padEnd(header[c].width)});
 		printStack.push({style: {color: style.style.color}, text: style.dividers[HEADER][BAR]});
 	}
-	return colorPrint(printStack);
+	return colorPrint(printStack, COLOR_FORMAT.TRUE, constraints);
 }
 
 /**
@@ -211,13 +228,14 @@ function printHeader(header, style)
  * @param {Data[] | [Data[]] | string[]} data 
  * @param {DivStyle} style 
  * @param {boolean} highlight
+ * @param {Object} constraints
  * @returns 
  */
-function PrintLine(header, data, style, highlight)
+function PrintLine(header, data, style, highlight, constraints)
 {
 	if (data == null)
 	{
-		printBorder(header, DIVIDER, style);
+		printBorder(header, DIVIDER, style, constraints);
 		return;
 	}
 
@@ -255,7 +273,7 @@ function PrintLine(header, data, style, highlight)
 		printStack.push({style: {color: style.style.color}, text: style.dividers[DIVIDER][BAR]});
 	}
 
-	return colorPrint(printStack);
+	return colorPrint(printStack, COLOR_FORMAT.TRUE,constraints);
 }
 
 function createStyle(color, highlight)
@@ -278,9 +296,15 @@ function pctColor(pct)
 }
 
 // Usage: ColorPrint(ns, ['red', 'This is some red text', '#FFFFFF', ' This is some white text], true);
-function colorPrint(stack, colorType = COLOR_FORMAT.TRUE)
+//constraints: {maxWidth = -1, maxHeight = -1, column = -1, row = -1}
+function colorPrint(stack, colorType = COLOR_FORMAT.TRUE, constraints)
 {
+	//console.log(constraints)
 	let out = '';
+	let column = constraints?.column || 0;
+	let amount = 0;
+	let maxAmount = constraints?.maxWidth || 0
+	let realAmount = 0;
 	for (let i = 0; i < stack.length; i++)
 	{
 		let style = stack[i].style;
@@ -295,13 +319,29 @@ function colorPrint(stack, colorType = COLOR_FORMAT.TRUE)
 			color = style.style.color;
 		}
 
+		//console.log("-----")
 		color = colorToAnsiiCode(color, false, colorType);
-
 		let text = stack[i].text.replace('%', '%%');
-		out = out + color + text;
+		//console.log(text, text.length, column, amount)
+		let textLength = text.length
+		realAmount += textLength
+		text = text.substring(column)
+		//console.log(text)
+		column -= textLength
+		let remaining = maxAmount - amount
+		if (maxAmount && remaining > 0) {
+			text = text.substring(0, remaining)
+		}else if (maxAmount) {
+			text = ""
+		}
+		amount += text.length
+		//console.log(text, text.length, column, amount, remaining)
+		if (text) {
+			out = out + color + text;
+		}
 	}
 
-	return out;
+	return {text: out, length: realAmount};
 }
 
 //color should either be a html code or an object with a html code

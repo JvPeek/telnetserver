@@ -43,9 +43,7 @@ function renderScreen(client)
     }
     let data = userList.map(user => [{style: {color: {r: user.color[0], g: user.color[1], b: user.color[2]}}, text: user.displayname}, {style: {color: 'white'}, text: user.app}])
     table = printTable(data, [{header: "User Name"}, {header: "Location"}], printStyle)
-    for (line of table) {
-      client.writeln(line)
-    }
+    client.write(table.text.join("\r\n"))
   }
 }
 function scroll(client, direction)
